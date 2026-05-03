@@ -2,8 +2,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SUPABASE_URL  = "https://xyzykxhrimhwqnnyjecw.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5enlreGhyaW1od3FubnlqZWN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDQ3NDEsImV4cCI6MjA5Mjk4MDc0MX0.PGAxWpm7jRBiJN1-moR5ndTcGKLpsxqCT9tnc2OpV6U";
+const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON;
 const GRUPO_ID      = "smart-wallet-casal";
 const supabase      = createClient(SUPABASE_URL, SUPABASE_ANON);
 
