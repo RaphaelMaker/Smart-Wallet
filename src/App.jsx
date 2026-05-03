@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 // ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 // Cole aqui as suas credenciais do Supabase (passo 2 do guia)
@@ -95,7 +95,7 @@ function Setup({onDone}) {
         atualizado_em: new Date().toISOString(),
       }, { onConflict: "grupo_id" });
       if (error) throw error;
-      localStorage.setItem("pierre_nome", nome.trim());
+      localStorage.setItem("smart_nome", nome.trim());
       onDone();
     } catch(e) {
       setErro("Erro ao salvar. Verifique suas credenciais do Supabase no App.jsx.");
@@ -108,7 +108,7 @@ function Setup({onDone}) {
       <div style={{background:"#1a1d2e",border:"1px solid #1e2030",borderRadius:20,padding:36,width:"100%",maxWidth:420}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,#6ee7b7,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:700,color:"#000",margin:"0 auto 16px"}}>P</div>
-          <h1 style={{color:"#e2e8f0",fontSize:22,fontWeight:700,margin:"0 0 6px"}}>Pierre Finance</h1>
+          <h1 style={{color:"#e2e8f0",fontSize:22,fontWeight:700,margin:"0 0 6px"}}>Smart Wallet</h1>
           <p style={{color:"#64748b",fontSize:13,margin:0}}>Configure o app para o casal</p>
         </div>
         {erro && <div style={{background:"#ef444420",border:"1px solid #ef444440",borderRadius:10,padding:"10px 14px",color:"#f87171",fontSize:13,marginBottom:16}}>{erro}</div>}
@@ -151,7 +151,7 @@ function useData() {
       .subscribe();
 
     // Presença — quem está online
-    const nome = localStorage.getItem("pierre_nome")||"Usuário";
+    const nome = localStorage.getItem("smart_nome")||"Usuário";
     const presence = supabase.channel("presenca")
       .on("presence",{event:"sync"},()=>{
         const state = presence.presenceState();
@@ -183,7 +183,7 @@ function useData() {
 
   // CRUD transações
   const addTx = async tx => {
-    const {data} = await supabase.from("transacoes").insert({...tx,grupo_id:GRUPO_ID,autor:localStorage.getItem("pierre_nome")||"?"}).select().single();
+    const {data} = await supabase.from("transacoes").insert({...tx,grupo_id:GRUPO_ID,autor:localStorage.getItem("smart_nome")||"?"}).select().single();
     return data;
   };
   const updateTx = async tx => {
@@ -217,7 +217,7 @@ function useData() {
 
   // Import CSV em lote
   const importTxs = async novas => {
-    const rows = novas.map(t=>({...t,grupo_id:GRUPO_ID,autor:localStorage.getItem("pierre_nome")||"?"}));
+    const rows = novas.map(t=>({...t,grupo_id:GRUPO_ID,autor:localStorage.getItem("smart_nome")||"?"}));
     const {data} = await supabase.from("transacoes").insert(rows).select();
     setTx(p=>[...(data||[]),...p].sort((a,b)=>b.data.localeCompare(a.data)));
   };
@@ -387,7 +387,7 @@ function Sidebar({active,setActive,online,nomeAtual}) {
       <div style={{padding:"0 20px 24px"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#6ee7b7,#3b82f6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:"#000"}}>P</div>
-          <div><div style={{color:"#fff",fontWeight:700,fontSize:15}}>Pierre</div><div style={{color:"#4ade80",fontSize:11}}>Finance Casal</div></div>
+          <div><div style={{color:"#fff",fontWeight:700,fontSize:15}}>Smart Wallet</div><div style={{color:"#4ade80",fontSize:11}}>Casal</div></div>
         </div>
       </div>
 
@@ -704,7 +704,7 @@ function Loading() {
 export default function App() {
   const [active,setActive]=useState("dashboard");
   const [setup,setSetup]=useState(false);
-  const nomeAtual=localStorage.getItem("pierre_nome")||"";
+  const nomeAtual=localStorage.getItem("smart_nome")||"";
   const db=useData();
 
   useEffect(()=>{
