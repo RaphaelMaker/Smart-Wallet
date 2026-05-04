@@ -150,6 +150,10 @@ function Login({onLogin}) {
       }
       localStorage.setItem("sw_nome",nome.trim());
       localStorage.setItem("sw_pin",pin.trim());
+      // Garante que o perfil do grupo existe
+      await supabase.from("perfis").upsert({
+        grupo_id:GRUPO_ID, nomes:[nome.trim()], renda_mensal:0, meta_economia:0
+      }, {onConflict:"grupo_id"});
       onLogin(nome.trim());
     } catch(e) {
       setErro("Erro de conexão. Verifique o Supabase.");
@@ -240,19 +244,31 @@ function useData(nomeAtual) {
       supabase.from("usuarios").select("nome,cor").eq("grupo_id",GRUPO_ID),
     ]);
     if(t.data)  setTxs(t.data);
-    if(p.data)  setPerfil(p.data);
     if(c.data)  setContas(c.data);
     if(u.data)  setUsers(u.data);
     if(o.data){ const obj={}; o.data.forEach(x=>obj[x.categoria]=x.limite); setOrc(obj); }
+    // Se perfil não existir, cria automaticamente
+    if(p.data) {
+      setPerfil(p.data);
+    } else {
+      const {data:novo} = await supabase.from("perfis").insert({
+        grupo_id:GRUPO_ID, nomes:[], renda_mensal:0, meta_economia:0
+      }).select().single();
+      if(novo) setPerfil(novo);
+    }
     setLoad(false);
   };
 
   const addTx = async tx => {
-    const {data,error} = await supabase.from("transacoes").insert({...tx,grupo_id:GRUPO_ID,autor:nomeAtual}).select().single();
-    if (data) setTxs(prev=>[data,...prev]);
+    const {tipo, ...txSemTipo} = tx;
+    const payload = {...txSemTipo, grupo_id:GRUPO_ID, autor:nomeAtual};
+    const {data,error} = await supabase.from("transacoes").insert(payload).select().single();
+    if (error) { alert("Erro ao salvar: " + error.message); return null; }
+    // Realtime cuida da atualização — só adiciona localmente se realtime não estiver ativo
+    if (data) setTxs(prev => prev.find(t=>t.id===data.id) ? prev : [data,...prev]);
     return data;
   };
-  const updTx = async tx => { await supabase.from("transacoes").update(tx).eq("id",tx.id); setTxs(prev=>prev.map(t=>t.id===tx.id?{...t,...tx}:t)); };
+  const updTx = async tx => { const {tipo,...txSemTipo}=tx; await supabase.from("transacoes").update(txSemTipo).eq("id",tx.id); setTxs(prev=>prev.map(t=>t.id===tx.id?{...t,...txSemTipo}:t)); };
   const delTx = async id  => { await supabase.from("transacoes").delete().eq("id",id); setTxs(prev=>prev.filter(t=>t.id!==id)); };
   const addCt = async c   => { const {data}=await supabase.from("contas").insert({...c,grupo_id:GRUPO_ID}).select().single(); setContas(p=>[...p,data]); };
   const delCt = async id  => { await supabase.from("contas").delete().eq("id",id); setContas(p=>p.filter(c=>c.id!==id)); };
