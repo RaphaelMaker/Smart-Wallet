@@ -35,7 +35,9 @@ const isMob   = () => window.innerWidth < 768;
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #080b12; font-family: 'Sora', sans-serif; color: #e2e8f0; overflow-x: hidden; }
+  html { overflow-x: hidden; width: 100%; }
+  body { background: #080b12; font-family: 'Sora', sans-serif; color: #e2e8f0; overflow-x: hidden; width: 100%; max-width: 100vw; }
+  #root { overflow-x: hidden; width: 100%; max-width: 100vw; }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 4px; }
@@ -46,6 +48,8 @@ const GLOBAL_CSS = `
   @keyframes bounce   { 0%,80%,100% { transform:translateY(0); } 40% { transform:translateY(-6px); } }
   @keyframes shimmer  { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
   .fade-up { animation: fadeUp .35s ease both; }
+  .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .scroll-x::-webkit-scrollbar { display: none; }
 `;
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
@@ -244,11 +248,12 @@ function useData(nomeAtual) {
   };
 
   const addTx = async tx => {
-    const {data} = await supabase.from("transacoes").insert({...tx,grupo_id:GRUPO_ID,autor:nomeAtual}).select().single();
+    const {data,error} = await supabase.from("transacoes").insert({...tx,grupo_id:GRUPO_ID,autor:nomeAtual}).select().single();
+    if (data) setTxs(prev=>[data,...prev]);
     return data;
   };
-  const updTx = async tx => { await supabase.from("transacoes").update(tx).eq("id",tx.id); };
-  const delTx = async id  => { await supabase.from("transacoes").delete().eq("id",id); };
+  const updTx = async tx => { await supabase.from("transacoes").update(tx).eq("id",tx.id); setTxs(prev=>prev.map(t=>t.id===tx.id?{...t,...tx}:t)); };
+  const delTx = async id  => { await supabase.from("transacoes").delete().eq("id",id); setTxs(prev=>prev.filter(t=>t.id!==id)); };
   const addCt = async c   => { const {data}=await supabase.from("contas").insert({...c,grupo_id:GRUPO_ID}).select().single(); setContas(p=>[...p,data]); };
   const delCt = async id  => { await supabase.from("contas").delete().eq("id",id); setContas(p=>p.filter(c=>c.id!==id)); };
   const saveOrc=async(cat,lim)=>{ await supabase.from("orcamentos").upsert({grupo_id:GRUPO_ID,categoria:cat,limite:lim},{onConflict:"grupo_id,categoria"}); setOrc(p=>({...p,[cat]:lim})); };
@@ -566,7 +571,7 @@ function Transactions({db,nomeAtual,online,users}) {
         <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="🔍 Buscar transação..." style={{width:"100%",background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"12px 14px",color:C.text,fontSize:14,outline:"none",marginBottom:12,boxSizing:"border-box"}}/>
 
         {/* Filtro categorias scroll horizontal */}
-        <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:8,marginBottom:8,scrollbarWidth:"none"}}>
+        <div className="scroll-x" style={{display:"flex",gap:8,paddingBottom:8,marginBottom:8,width:"100%"}}>
           {["Todas",...CATS].map(c=>(
             <button key={c} onClick={()=>setCat(c)} style={{flexShrink:0,padding:"7px 14px",borderRadius:20,border:"none",cursor:"pointer",fontSize:12,fontWeight:500,background:cat===c?C.accent:C.card,color:cat===c?"#000":C.muted,whiteSpace:"nowrap"}}>
               {c==="Todas"?"Todas":(CAT_ICON[c]||"")+" "+c}
@@ -803,7 +808,7 @@ export default function App() {
   };
 
   return (
-    <div style={{background:C.bg,minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
+    <div style={{background:C.bg,minHeight:"100vh",width:"100%",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden"}}>
       <style>{GLOBAL_CSS}</style>
       {pages[active]}
       <BottomNav active={active} setActive={setActive} nomeAtual={nomeAtual}/>
